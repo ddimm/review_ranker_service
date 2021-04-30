@@ -40,7 +40,7 @@ def process_words(reviewText: str) -> Generator[str, None, None]:
                 yield stemmed_word
 
 
-@app.post("/")
+@app.post("/", response_model=TokenizedReview)
 async def tokenize(review: Review) -> TokenizedReview:
     freq_table = {}
     for processed_word in process_words(review.reviewText):
