@@ -1,8 +1,11 @@
+
 import re
 from typing import Dict, Generator, List, Set
 
+import aiohttp
 import nltk
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
@@ -12,6 +15,21 @@ nltk.download("punkt")
 nltk.download("stopwords")
 english_stop_words: Set = set(stopwords.words("english"))
 app = FastAPI()
+
+origins = [
+
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class Review(BaseModel):
@@ -38,6 +56,15 @@ def process_words(reviewText: str) -> Generator[str, None, None]:
             stemmed_word = stemmer.stem(lower_word)
             if not punctuation_regex.match(stemmed_word) and not num_regex.match(stemmed_word):
                 yield stemmed_word
+
+
+@app.get("/solr")
+async def fetch_solr(q: str = "", fq: str = ""):
+    async with aiohttp.ClientSession() as session:
+        solr_url = "http://localhost:8983/solr/reviews/select"
+        async with session.get(solr_url, params={"fq": fq, "q": q}) as resp:
+            resp_json = await resp.json()
+            return resp_json
 
 
 @app.post("/", response_model=TokenizedReview)
