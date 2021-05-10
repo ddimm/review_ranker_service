@@ -3,7 +3,7 @@ import re
 from typing import Any, Generator, Set
 
 import aiohttp
-
+import json
 from aiohttp.web import HTTPException
 import nltk
 from fastapi import FastAPI
@@ -57,6 +57,11 @@ async def startup_event():
             finally:
 
                 break
+        with open("./review_data.json", "r") as g:
+            for l in g:
+                doc_data = json.loads(l)
+                await session.post(
+                    "http://solr:8983/solr/reviews/update", json=doc_data)
         print("startup complete")
 
 
