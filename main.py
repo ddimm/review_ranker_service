@@ -1,19 +1,19 @@
 
 import re
-from typing import Dict, Generator, List, Set
+from typing import Generator, Set
 
 import aiohttp
+from aiohttp.client_exceptions import ClientConnectionError
+from aiohttp.web import HTTPException
 import nltk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
-from pydantic import BaseModel
+from models import Review, TokenizedReview
 
-nltk.download("punkt")
-nltk.download("stopwords")
-english_stop_words: Set = set(stopwords.words("english"))
+english_stop_words: Set = set()
 app = FastAPI()
 
 origins = [
@@ -32,17 +32,30 @@ app.add_middleware(
 )
 
 
-class Review(BaseModel):
-    reviewerID: str
-    asin: str
-    reviewText: str
+@app.on_event("startup")
+async def startup_event():
+    nltk.download("punkt")
+    nltk.download("stopwords")
+    english_stop_words.union(set(stopwords.words("english")))
+    async with aiohttp.ClientSession(trust_env=True) as session:
 
+        schema_url = "http://solr:8983/solr/reviews/schema"
 
-class TokenizedReview(BaseModel):
-    frequencyMap: Dict[str, int]
-    reviewerID: str
-    asin = str
-    reviewText: str
+        while True:
+            try:
+
+                await session.post(schema_url,  json={
+                    "add-field": {"name": "reviewText", "type": "text_general", "stored": "true"}})
+                await session.post(schema_url,  json={
+                    "add-field": {"name": "asin", "type": "string", "stored": "true"}})
+                await session.post(schema_url,  json={
+                    "add-field": {"name": "reviewID", "type": "string", "stored": "true"}})
+            except HTTPException:
+                continue
+            finally:
+
+                break
+        print("startup complete")
 
 
 def process_words(reviewText: str) -> Generator[str, None, None]:
@@ -61,7 +74,7 @@ def process_words(reviewText: str) -> Generator[str, None, None]:
 @app.get("/solr")
 async def fetch_solr(q: str = "", fq: str = ""):
     async with aiohttp.ClientSession() as session:
-        solr_url = "http://localhost:8983/solr/reviews/select"
+        solr_url = "http://solr:8983/solr/reviews/select"
         async with session.get(solr_url, params={"fq": fq, "q": q}) as resp:
             resp_json = await resp.json()
             return resp_json
