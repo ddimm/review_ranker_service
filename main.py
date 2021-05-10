@@ -1,9 +1,9 @@
 
 import re
-from typing import Generator, Set
+from typing import Any, Generator, Set
 
 import aiohttp
-from aiohttp.client_exceptions import ClientConnectionError
+
 from aiohttp.web import HTTPException
 import nltk
 from fastapi import FastAPI
@@ -11,6 +11,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
+from starlette.requests import Request
+from starlette.responses import Response
 from models import Review, TokenizedReview
 
 english_stop_words: Set = set()
@@ -71,13 +73,31 @@ def process_words(reviewText: str) -> Generator[str, None, None]:
                 yield stemmed_word
 
 
-@app.get("/solr")
-async def fetch_solr(q: str = "", fq: str = ""):
+@app.get("/solr/{rest_of_path:path}")
+async def fetch_solr(rest_of_path: str, request: Request, response: Response):
     async with aiohttp.ClientSession() as session:
-        solr_url = "http://solr:8983/solr/reviews/select"
-        async with session.get(solr_url, params={"fq": fq, "q": q}) as resp:
-            resp_json = await resp.json()
-            return resp_json
+
+        solr_url = f"http://solr:8983/solr/{rest_of_path}"
+        proxy = await session.get(solr_url, params=request.query_params)
+        response.body = await proxy.read()
+        response.status_code = proxy.status
+
+        response.media_type = proxy.content_type
+        response.charset = proxy.charset
+        response.headers.update(proxy.headers)
+        return response
+
+
+@app.post("/solr/{rest_of_path:path}")
+async def post_solr(rest_of_path: str, data: Any, request: Request, response: Response):
+    async with aiohttp.ClientSession() as session:
+        solr_url = f"http://solr:8983/solr/{rest_of_path}"
+        proxy = await session.post(solr_url, json=data, params=request.query_params)
+        response.body = await proxy.read()
+        response.status_code = proxy.status
+        response.charset = proxy.charset
+        response.headers.update(proxy.headers)
+        return response
 
 
 @app.post("/", response_model=TokenizedReview)
