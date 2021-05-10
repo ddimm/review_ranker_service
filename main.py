@@ -41,7 +41,7 @@ async def startup_event():
     english_stop_words.union(set(stopwords.words("english")))
     async with aiohttp.ClientSession(trust_env=True) as session:
 
-        schema_url = "https://solr:8983/solr/reviews/schema"
+        schema_url = "http://solr:8983/solr/reviews/schema"
 
         while True:
             try:
@@ -77,7 +77,7 @@ def process_words(reviewText: str) -> Generator[str, None, None]:
 async def fetch_solr(rest_of_path: str, request: Request, response: Response):
     async with aiohttp.ClientSession() as session:
 
-        solr_url = f"https://solr:8983/solr/{rest_of_path}"
+        solr_url = f"http://solr:8983/solr/{rest_of_path}"
         proxy = await session.get(solr_url, params=request.query_params)
         response.body = await proxy.read()
         response.status_code = proxy.status
@@ -91,7 +91,7 @@ async def fetch_solr(rest_of_path: str, request: Request, response: Response):
 @app.post("/solr/{rest_of_path:path}")
 async def post_solr(rest_of_path: str, data: Any, request: Request, response: Response):
     async with aiohttp.ClientSession() as session:
-        solr_url = f"https://solr:8983/solr/{rest_of_path}"
+        solr_url = f"http://solr:8983/solr/{rest_of_path}"
         proxy = await session.post(solr_url, json=data, params=request.query_params)
         response.body = await proxy.read()
         response.status_code = proxy.status
