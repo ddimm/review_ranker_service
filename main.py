@@ -51,7 +51,7 @@ async def startup_event():
                 await session.post(schema_url,  json={
                     "add-field": {"name": "asin", "type": "string", "stored": "true"}})
                 await session.post(schema_url,  json={
-                    "add-field": {"name": "reviewID", "type": "string", "stored": "true"}})
+                    "add-field": {"name": "reviewerID", "type": "string", "stored": "true"}})
             except HTTPException:
                 continue
             finally:
