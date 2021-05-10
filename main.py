@@ -43,25 +43,18 @@ async def startup_event():
 
         schema_url = "http://solr:8983/solr/reviews/schema"
 
-        while True:
-            try:
+        await session.post(schema_url,  json={
+            "add-field": {"name": "reviewText", "type": "text_general", "stored": "true"}})
+        await session.post(schema_url,  json={
+            "add-field": {"name": "asin", "type": "string", "stored": "true"}})
+        await session.post(schema_url,  json={
+            "add-field": {"name": "reviewerID", "type": "string", "stored": "true"}})
 
-                await session.post(schema_url,  json={
-                    "add-field": {"name": "reviewText", "type": "text_general", "stored": "true"}})
-                await session.post(schema_url,  json={
-                    "add-field": {"name": "asin", "type": "string", "stored": "true"}})
-                await session.post(schema_url,  json={
-                    "add-field": {"name": "reviewerID", "type": "string", "stored": "true"}})
-            except HTTPException:
-                continue
-            finally:
-
-                break
-        with open("./review_data.json", "r") as g:
-            for l in g:
-                doc_data = json.loads(l)
-                await session.post(
-                    "http://solr:8983/solr/reviews/update/json/docs", json=doc_data, params={"json.command": "false"})
+        # with open("./review_data.json", "r") as g:
+        #     for l in g:
+        #         doc_data = json.loads(l)
+        #         await session.post(
+        #             "http://solr:8983/solr/reviews/update/json/docs", json=doc_data, params={"json.command": "false"})
         print("startup complete")
 
 
