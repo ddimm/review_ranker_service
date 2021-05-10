@@ -61,7 +61,7 @@ async def startup_event():
             for l in g:
                 doc_data = json.loads(l)
                 await session.post(
-                    "http://solr:8983/solr/reviews/update/json/docs", json=doc_data, params={"json.command": False})
+                    "http://solr:8983/solr/reviews/update/json/docs", json=doc_data, params={"json.command": "false"})
         print("startup complete")
 
 
