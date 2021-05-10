@@ -1,11 +1,11 @@
 
+import json
 import re
 from typing import Any, Generator, Set
 
 import aiohttp
-import json
-from aiohttp.web import HTTPException
 import nltk
+from aiohttp.web import HTTPException
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from nltk.corpus import stopwords
@@ -13,6 +13,7 @@ from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 from starlette.requests import Request
 from starlette.responses import Response
+
 from models import Review, TokenizedReview
 
 english_stop_words: Set = set()
@@ -50,11 +51,10 @@ async def startup_event():
         await session.post(schema_url,  json={
             "add-field": {"name": "reviewerID", "type": "string", "stored": "true"}})
 
-        # with open("./review_data.json", "r") as g:
-        #     for l in g:
-        #         doc_data = json.loads(l)
-        #         await session.post(
-        #             "http://solr:8983/solr/reviews/update/json/docs", json=doc_data, params={"json.command": "false"})
+        with open("./review_data.jsonl", "r") as g:
+            await session.post("http://solr:8983/solr/reviews/update/json/docs", data=g)
+
+            await session.post("http://solr:8983/solr/reviews/update", json={"commit": {}})
         print("startup complete")
 
 
@@ -87,10 +87,11 @@ async def fetch_solr(rest_of_path: str, request: Request, response: Response):
 
 
 @app.post("/solr/{rest_of_path:path}")
-async def post_solr(rest_of_path: str, data: Any, request: Request, response: Response):
+async def post_solr(rest_of_path: str, request: Request, response: Response):
+
     async with aiohttp.ClientSession() as session:
         solr_url = f"http://solr:8983/solr/{rest_of_path}"
-        proxy = await session.post(solr_url, json=data, params=request.query_params)
+        proxy = await session.post(solr_url, json=await request.json(),  params=request.query_params)
         response.body = await proxy.read()
         response.status_code = proxy.status
         response.charset = proxy.charset
