@@ -1,7 +1,7 @@
 
-import json
+
 import re
-from typing import Any, Generator, Set
+from typing import Generator, Set
 
 import aiohttp
 import nltk
@@ -57,7 +57,7 @@ async def startup_event():
             await session.post("http://solr:8983/solr/reviews/update/json/docs", data=g)
 
             await session.post("http://solr:8983/solr/reviews/update", json={"commit": {}})
-        print("startup complete")
+    print("startup complete")
 
 
 def process_words(reviewText: str) -> Generator[str, None, None]:
