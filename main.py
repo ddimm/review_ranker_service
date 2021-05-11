@@ -25,7 +25,7 @@ origins = [
     "http://localhost:8080",
     "http://localhost:3000",
     "http://review-ranker.netlify.app",
-     "https://review-ranker.netlify.app"
+    "https://review-ranker.netlify.app"
 ]
 
 app.add_middleware(
