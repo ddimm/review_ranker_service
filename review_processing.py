@@ -1,4 +1,3 @@
-from os import path
 
 
 from models import Product, Review, User
