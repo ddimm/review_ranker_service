@@ -60,7 +60,7 @@ async def startup_event():
         await session.post(schema_url,  json={
             "add-field": {"name": "reviewerID", "type": "string", "stored": "true"}})
 
-        with open(path.join("data/out", "review_data.jsonl"), "r") as g:
+        with open("review_data.jsonl", "r") as g:
             await session.post(f"{SOLR_URL}/solr/reviews/update/json/docs", data=g)
 
             await session.post(f"{SOLR_URL}/solr/reviews/update", json={"commit": {}})
@@ -97,7 +97,7 @@ async def post_solr(rest_of_path: str, request: Request, response: Response):
 @app.post("/tokenize", response_model=TokenizedReview)
 async def tokenize(review: Review) -> TokenizedReview:
     freq_table = {}
-    for processed_word in process_words(review.reviewText):
+    for processed_word in process_words(review.reviewText, english_stop_words):
         if processed_word not in freq_table:
             freq_table[processed_word] = 0
         freq_table[processed_word] += 1
@@ -106,14 +106,14 @@ async def tokenize(review: Review) -> TokenizedReview:
 
 @app.get("/product_data")
 async def get_product_data():
-    return FileResponse(path.join("data/out", "product_data.jsonl"))
+    return FileResponse("product_data.jsonl")
 
 
 @app.get("/user_data")
 async def get_user_data():
-    return FileResponse(path.join("data/out", "user_data.jsonl"))
+    return FileResponse("user_data.jsonl")
 
 
 @app.get("/review_data")
 async def get_review_data():
-    return FileResponse(path.join("data/out", "review_data.jsonl"))
+    return FileResponse("review_data.jsonl")

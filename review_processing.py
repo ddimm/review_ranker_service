@@ -22,7 +22,7 @@ def process_words(reviewText: str, english_stop_words: Set[str]) -> Generator[st
                 yield stemmed_word
 
 
-def prep_data(english_stop_words: Set[str], data_in_path: str = "data/in/Cell_Phones_and_Accessories_5.json", data_out_path: str = "data/out"):
+def prep_data(english_stop_words: Set[str], data_in_path: str = "Cell_Phones_and_Accessories_5.json"):
     products: Dict[str, Product] = {}
     # parse json and load in all the products
     with open(data_in_path, "r") as raw_file:
@@ -61,17 +61,17 @@ def prep_data(english_stop_words: Set[str], data_in_path: str = "data/in/Cell_Ph
                     user.word_rank[word] = 0
                 user.word_rank[word] += 1
     # now we write out the data
-    with open(path.join(data_out_path, "user_data.jsonl"), "w") as user_file:
+    with open("user_data.jsonl", "w") as user_file:
         for user in users_dict.values():
             json_string = user.json()
             user_file.write(json_string)
             user_file.write("\n")
-    with open(path.join(data_out_path, "review_data.jsonl"), "w") as review_file:
+    with open("review_data.jsonl", "w") as review_file:
         for review in reviews:
             json_string = review.json()
             review_file.write(json_string)
             review_file.write("\n")
-    with open(path.join(data_out_path, "product_data.jsonl"), "w") as product_file:
+    with open("product_data.jsonl", "w") as product_file:
         for product in selected_products:
             json_string = product.json()
             product_file.write(json_string)

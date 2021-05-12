@@ -3,3 +3,5 @@ venv
 __pycache__
 .env
 data
+Cell_Phones_and_Accessories_5.json
+*.jsonl
