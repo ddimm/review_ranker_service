@@ -3,14 +3,17 @@
 from models import Product, Review, User
 import re
 import json
+import gzip
 from typing import Dict, Generator, List, Set
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
+import string
+import random
 
 
 def process_words(reviewText: str, english_stop_words: Set[str]) -> Generator[str, None, None]:
     punctuation_regex = re.compile("[^a-zA-Z0-9]")
-    num_regex = re.compile("-?[0-9][0-9,.]+")
+    num_regex = re.compile("-?\d+.?\d*")
 
     stemmer = PorterStemmer()
     for word in word_tokenize(reviewText):
@@ -21,37 +24,45 @@ def process_words(reviewText: str, english_stop_words: Set[str]) -> Generator[st
                 yield stemmed_word
 
 
-def prep_data(english_stop_words: Set[str], data_in_path: str = "Cell_Phones_and_Accessories_5.json"):
-    products: Dict[str, Product] = {}
-    # parse json and load in all the products
-    with open(data_in_path, "r") as raw_file:
+def parse_products() -> List[Product]:
+    products: List[Product] = []
+    with gzip.open("meta_Cell_Phones_and_Accessories.json.gz", "rb") as raw_file:
         for line in raw_file:
-            try:
 
-                raw_object = json.loads(line)
-                review = Review.parse_obj(raw_object)
-                if review.asin not in products:
-                    products[review.asin] = Product(
-                        asin=review.asin, product_link=f"https://www.amazon.com/dp/{review.asin}", reviews=[])
-                products[review.asin].reviews.append(review)
-            except TypeError as e:
+            raw_object = json.loads(line)
 
-                continue
-            except Exception as e:
+            products.append(Product.parse_obj(raw_object))
+    return products
 
-                continue
+
+def parse_reviews() -> Generator[Review, None, None]:
+    with gzip.open("Cell_Phones_and_Accessories.json.gz", "rb") as raw_file:
+        for line in raw_file:
+            raw_object = json.loads(line)
+            yield Review.parse_obj(raw_object)
+
+
+def prep_data(english_stop_words: Set[str]):
+    # deterministic??
+    random.seed(42)
+    products = parse_products()
+
     # will only look at a sample of 500 products
-    selected_products = list(products.values())[:500]
+    selected_products_sample = random.sample(products, 1_000)
+    selected_products = {
+        product.asin: product for product in selected_products_sample}
     users_dict: Dict[str, User] = {}
     reviews: List[Review] = []
     # build user profiles and reviews
-    for product in selected_products:
-        for review in product.reviews:
+    for review in parse_reviews():
+        if review.asin in selected_products:
+            selected_products[review.asin].reviews.append(review)
+            reviews.append(review)
             if review.reviewerID not in users_dict:
                 users_dict[review.reviewerID] = User(
-                    reviewerID=review.reviewerID, reviews=[], word_rank={})
+                    reviewerID=review.reviewerID)
             users_dict[review.reviewerID].reviews.append(review)
-            reviews.append(review)
+
     # build the word_rank for each user profile
     for user in users_dict.values():
         for review in user.reviews:

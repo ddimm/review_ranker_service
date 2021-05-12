@@ -1,27 +1,41 @@
 from pydantic import BaseModel
-from typing import Dict, List
+from typing import Dict, List, Optional, Union
+
+from pydantic.fields import Field
 
 
 class Review(BaseModel):
     reviewerID: str
     asin: str
     reviewText: str
+    reviewerName: Optional[str]
+    vote: Optional[int]
+    style: Optional[Dict[str, str]]
+    overall: Optional[float]
+    summary: Optional[str]
+    unixReviewTime: Optional[int]
+    reviewTime: Optional[str]
+    image: Optional[List[str]]
 
 
-class TokenizedReview(BaseModel):
+class TokenizedReview(Review):
     frequencyMap: Dict[str, int]
-    reviewerID: str
-    asin = str
-    reviewText: str
 
 
 class User(BaseModel):
     reviewerID: str
-    reviews: List[Review] = None
-    word_rank: Dict[str, float] = None
+    reviews: List[Review] = Field(default_factory=list)
+    word_rank: Dict[str, float] = Field(default_factory=dict)
 
 
 class Product(BaseModel):
     asin: str
-    product_link: str = ""
-    reviews: List[Review] = None
+    title: Optional[str]
+    feature: Optional[List[str]]
+    description: Optional[Union[str, List[str]]]
+    price: Union[str, float]
+    image: Optional[List[str]]
+    salesRank: Optional[Dict[str, int]]
+    brand: Optional[str]
+    categories: Optional[Union[List[str], str]]
+    reviews: List[Review] = Field(default_factory=list)

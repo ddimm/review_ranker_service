@@ -47,7 +47,7 @@ async def startup_event():
     # download data nltk
     nltk.download("punkt")
     nltk.download("stopwords")
-    english_stop_words.union(set(stopwords.words("english")))
+    english_stop_words = english_stop_words.union(set(stopwords.words("english")))
     prep_data(english_stop_words)
     async with aiohttp.ClientSession(trust_env=True) as session:
         # setup solr schema

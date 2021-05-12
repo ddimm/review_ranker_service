@@ -5,3 +5,4 @@ __pycache__
 data
 Cell_Phones_and_Accessories_5.json
 *.jsonl
+*.gz
