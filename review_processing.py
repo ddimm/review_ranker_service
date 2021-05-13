@@ -7,7 +7,6 @@ import gzip
 from typing import Dict, Generator, List, Set
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
-import string
 import random
 
 
@@ -70,6 +69,8 @@ def prep_data(english_stop_words: Set[str]):
                 if word not in user.word_rank:
                     user.word_rank[word] = 0
                 user.word_rank[word] += 1
+    print("users", len(users_dict))
+    print('reviews', len(reviews))
     # now we write out the data
     with open("user_data.jsonl", "w") as user_file:
         for user in users_dict.values():
@@ -82,7 +83,7 @@ def prep_data(english_stop_words: Set[str]):
             review_file.write(json_string)
             review_file.write("\n")
     with open("product_data.jsonl", "w") as product_file:
-        for product in selected_products:
+        for product in selected_products.values():
             json_string = product.json()
             product_file.write(json_string)
             product_file.write("\n")

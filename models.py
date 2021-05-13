@@ -7,15 +7,15 @@ from pydantic.fields import Field
 class Review(BaseModel):
     reviewerID: str
     asin: str
-    reviewText: str
+    reviewText: str = ""
     reviewerName: Optional[str]
-    vote: Optional[int]
-    style: Optional[Dict[str, str]]
-    overall: Optional[float]
+    vote: Optional[Union[str, int]]
+    style: Optional[Union[Dict[str, str], str]]
+    overall: Optional[Union[str, float]]
     summary: Optional[str]
     unixReviewTime: Optional[int]
     reviewTime: Optional[str]
-    image: Optional[List[str]]
+    image: Optional[Union[str, List[str]]]
 
 
 class TokenizedReview(Review):
